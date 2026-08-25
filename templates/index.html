@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hover Dropdown Image Swap</title>
+    <style>
+        /* Container for the custom dropdown menu */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+
+        /* The main hover button/trigger */
+        .dropdown-button {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+        }
+
+        /* The hidden content list */
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #f1f1f1;
+            box-shadow: 0px 8px 16px rgba(0,0,0,0.2);
+            z-index: 1;
+        }
+
+        /* Individual links inside the dropdown */
+        .dropdown-content a {
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+        }
+
+        .dropdown-content a:hover {
+            background-color: #ddd;
+        }
+
+        /* Show the menu when hovering over the container */
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        /* Image Display Logic */
+        .image-container {
+            position: relative;
+            width: 400px;
+            height: 300px;
+        }
+
+        /* Hide all images by default except the starting placeholder */
+        .hover-img {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Always show the default starting image */
+        #img-default {
+            display: block;
+        }
+
+        /* CSS Magic: When hovering a link, show its corresponding image */
+        .dropdown-content a[data-target="dog"]:hover ~ .image-container #img-dog {
+            display: block;
+            z-index: 10;
+        }
+
+        .dropdown-content a[data-target="cat"]:hover ~ .image-container #img-cat {
+            display: block;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Hover Dropdown Example</h1>
+
+    <div class="dropdown">
+        <!-- The visual trigger for the menu -->
+        <button class="dropdown-button">Hover to Choose</button>
+        
+        <!-- The content container holding options AND images together -->
+        <div class="dropdown-content">
+            <!-- Custom data attributes map links to specific images -->
+            <a href="#" data-target="dog">Dog</a>
+            <a href="#" data-target="cat">Cat</a>
+
+            <!-- The image container lives right next to the links as a sibling -->
+            <div class="image-container">
+                <img id="img-default" class="hover-img" src="{{ url_for('static', filename='hello.jpg') }}" alt="Default">
+                <img id="img-dog" class="hover-img" src="{{ url_for('static', filename='img1.jpg') }}" alt="Dog">
+                <img id="img-cat" class="hover-img" src="{{ url_for('static', filename='img2.jpg') }}" alt="Cat">
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
