@@ -20,3 +20,14 @@ def home():
 
     return render_template("index.html", selected = selected_image, image = image_file)
 
+@app.route('/hi')
+def index():
+    # Maps option names to your image file paths
+    map_options = [
+        {"id": "map1", "name": "North Region", "img": "img1.jpg"},
+        {"id": "map2", "name": "South Region", "img": "le_png.png"},
+    ]
+    # Default image shown before any hover action
+    default_map = "hello.jpg" 
+    
+    return render_template('index.html', options=map_options, default_map=default_map)
