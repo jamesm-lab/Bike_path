@@ -1,132 +1,161 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
+    <title>Flask Hover Preview Overlay</title>
     <style>
-        /* Layout styling */
-        .container {
-            display: flex;
-            gap: 40px;
-            margin: 50px;
-            font-family: sans-serif;
+        /* --- GLOBAL WRAPPER --- */
+        /* This establishes a shared anchor point for both the menu and image positioning */
+        .app-wrapper {
+            position: relative;
+            font-family: Arial, sans-serif;
+            margin: 20px;
         }
 
-        /* Custom dropdown menu styling */
+        /* --- CSS CUSTOM DROPDOWN SYSTEM --- */
         .dropdown {
             position: relative;
             display: inline-block;
-            width: 200px;
+            z-index: 4;
         }
 
-        .dropdown-label {
-            background: #007bff;
-            color: white;
-            padding: 10px;
+        .dropdown-button {
+            background-color: #f1f1f1;
+            color: #333;
+            padding: 10px 20px;
+            border: 1px solid #ccc;
             cursor: pointer;
-            border-radius: 4px;
-            text-align: center;
+            min-width: 160px;
+            text-align: left;
+            z-index: 4;
         }
 
-        .dropdown-options {
+        .dropdown-content {
             display: none;
             position: absolute;
-            background: #f9f9f9;
-            width: 100%;
+            background-color: #fff;
+            min-width: 160px;
             box-shadow: 0px 8px 16px rgba(0,0,0,0.2);
-            z-index: 1;
+            z-index: 10;
+            border: 1px solid #ccc;
         }
 
-        /* Show options when hovering over the main dropdown container */
-        .dropdown:hover .dropdown-options {
+        .dropdown:hover .dropdown-content {
             display: block;
         }
 
-        .option-item {
+        .dropdown-content button {
+            color: black;
             padding: 12px 16px;
+            display: block;
+            width: 100%;
+            background: none;
+            border: none;
+            text-align: left;
             cursor: pointer;
-            border-bottom: 1px solid #ddd;
+            z-index: 4;
         }
 
-        .option-item:hover {
-            background-color: #f1f1f1;
+        .dropdown-content button:hover {
+            background-color: #ddd;
+            z-index: 4;
         }
 
-        /* Map display area logic */
-        .map-display {
-            width: 500px;
-            height: 400px;
-            border: 2px solid #ccc;
+
+        /* --- IMAGE DISPLAY CONTAINER --- */
+        .image-container {
             position: relative;
+            width: 500px;   /* Match your image dimensions */
+            height: 500px;  /* Match your image dimensions */
+            margin-top: 20px;
+            border: 1px solid #ccc;
         }
 
-        .map-image {
-            width: 10%;
-            height: 100%;
-            object-fit: cover;
+        /* Static base layer image */
+        .base-img {
             position: absolute;
             top: 0;
             left: 0;
-            display: none; /* Hide all images by default */
-        }
-
-        /* Core CSS Trick: Target images based on which option is hovered */
-        
-        /* 1. Show the default map initially */
-        #default-map {
-            display: block;
-        }
-
-        /* 2. Hide default map when ANY option wrapper is hovered */
-        .container:has(.option-item:hover) #default-map {
-            display: none;
-        }
-
-        /* 3. Match specific option hovers to specific images using structural IDs */
-        {% for opt in options %}
-            .container:has(#{{ opt.id }}:hover) #img-{{ opt.id }} {
-              display: block;
-        }
-        {% endfor %}
-
-        .bg-image {
             width: 100%;
-            height: 100%;
-            display: block;
+            z-index: 1;
         }
 
-        .overlay-image {
+        /* Active overlay locked by the Flask server post-click */
+        .overlay-active {
             position: absolute;
-            top: 20px;      
-            left: 20px;    
-            z-index: 10;    
-            width: 50px;  
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+
+        /* --- THE FIXED HOVER PREVIEW SYSTEM --- */
+        .overlay-hover {
+            display: none;
+            position: absolute;
+            
+            /* Crucial: These coordinates must push the hover image down */
+            /* to sit EXACTLY over your .image-container window position */
+            top: 0;      /* Adjust this pixel value to match your container's top boundary */
+            left: 0;        /* Aligns perfectly left with the dropdown wrapper */
+            
+            width: 500px;   /* Must match the width of your .image-container */
+            z-index: 3;     /* Placed on top of the active clicked layer */
+            pointer-events: none;
+        }
+
+        /* When hovering a list item, reveal the preview down in the image workspace */
+        .dropdown-content li:hover .overlay-hover {
+            display: block;
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <!-- Dropdown Menu -->
-        <div class="dropdown">
-            <div class="dropdown-label">Select a Region ▾</div>
-            <div class="dropdown-options">
-                {% for opt in options %}
-                    <div class="option-item" id="{{ opt.id }}">{{ opt.name }}</div>
-                {% endfor %}
+    <!-- Everything is wrapped in one container to maintain absolute coordinate alignment -->
+    <div class="app-wrapper">
+
+        <h1>Hover Options to Preview / Click to Lock</h1>
+
+        <form method="POST" action="/">
+            <div class="dropdown">
+                <div class="dropdown-button">
+                    {% if selected_option == 'option1' %} Option 1 Active
+                    {% elif selected_option == 'option2' %} Option 2 Active
+                    {% else %} -- Choose an Option --
+                    {% endif %}
+                </div>
+                
+                <ul class="dropdown-content" style="list-style: none; margin: 0; padding: 0;">
+                    <li>
+                        <button type="submit" name="overlay_choice" value="option1">Overlay Option 1</button>
+                        <!-- This image breaks out of the menu and projects onto the container below -->
+                        <img src="{{ url_for('static', filename='le_png.png') }}" class="overlay-hover" alt="Preview 1">
+                    </li>
+                    <li>
+                        <button type="submit" name="overlay_choice" value="option2">Overlay Option 2</button>
+                        <img src="{{ url_for('static', filename='img1.jpg') }}" class="overlay-hover" alt="Preview 2">
+                    </li>
+                    <li>
+                        <button type="submit" name="overlay_choice" value="">Clear Overlay</button>
+                    </li>
+                </ul>
             </div>
+        </form>
+
+        <!-- Static Image Display Window -->
+        <div class="image-container">
+            <!-- Static background image always showing -->
+            <img src="{{ url_for('static', filename=base_image) }}" class="base-img" alt="Base Image">
+
+            <!-- Permanent selected clicked image rendered by Flask -->
+            {% if overlay_image %}
+                <img src="{{ url_for('static', filename=overlay_image) }}" class="overlay-active" alt="Active Overlay">
+            {% endif %}
         </div>
 
-        <!-- Map Display Area -->
-        <div class="map-display">
-            <!-- Default Image -->
-             
-            <img id="default-map" class= "bg-image"  src="{{ url_for('static', filename=default_map) }}" alt="Base Map">
-            
-            <!-- Hover Dynamic Images -->
-            {% for opt in options %}
-                <img id="img-{{ opt.id }}" class="map-image" src="{{ url_for('static', filename=opt.img) }}" alt="{{ opt.name }}">
-            {% endfor %}
-        </div>
     </div>
 
 </body>

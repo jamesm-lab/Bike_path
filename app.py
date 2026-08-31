@@ -8,26 +8,33 @@ cur = con.cursor()
 result = cur.execute("SELECT * FROM INTERSECTION")
 path_id = result.fetchall()
 
-image_map = {"img1": "img1.jpg", "img2": "img2.jpg"}
 
-@app.route("/", methods=["GET","POST"])
-def home():
-    selected_image = "img1"
+
+
+
+@app.route("/", methods=["GET", "POST"])
+def index():
+    # The default background image that always stays on screen
+    base_image = "hello.jpg"
+
+    # List your transparent overlay files here
+    overlay_options = {
+        "option1": "le_png.png",
+        "option2": "img1.jpg",
+    }
+
+    selected_option = None
+    overlay_image = None
 
     if request.method == "POST":
-        selected_image = request.form.get("images", "img1")
-    image_file = image_map.get(selected_image, "img1.png)")
+        # Get the option selected by the user
+        selected_option = request.form.get("overlay_choice")
+        # Find the matching transparent image filename
+        overlay_image = overlay_options.get(selected_option)
 
-    return render_template("index.html", selected = selected_image, image = image_file)
-
-@app.route('/hi')
-def index():
-    # Maps option names to your image file paths
-    map_options = [
-        {"id": "map1", "name": "North Region", "img": "img1.jpg"},
-        {"id": "map2", "name": "South Region", "img": "le_png.png"},
-    ]
-    # Default image shown before any hover action
-    default_map = "hello.jpg" 
-    
-    return render_template('index.html', options=map_options, default_map=default_map)
+    return render_template(
+        "index.html",
+        base_image=base_image,
+        overlay_image=overlay_image,
+        selected_option=selected_option,
+    )
