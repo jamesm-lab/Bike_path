@@ -71,7 +71,7 @@ class Graph:
 
 
 
-@app.route("/", methods=["GET", "POST"])
+@app.route("/hi", methods=["GET", "POST"])
 def index():
     # The default background image that always stays on screen
     base_image = "hello.jpg"
@@ -98,22 +98,28 @@ def index():
         selected_option=selected_option,
     )
 
-@app.route("/hi", methods=["GET", "POST"])
+@app.route("/", methods=["GET", "POST"])
 def hi():
     con = sqlite3.connect("database.db")
     cur = con.cursor()
     result = cur.execute("SELECT * FROM INTERSECTION")
-    path_id = result.fetchall()
+    intersection_info = result.fetchall()
 
     g = Graph(size=7)
 
-    for section in path_id:
+    for section in intersection_info:
         g.add_vertex_data(section[0], section[1])
 
-   
+    result = cur.execute("SELECT * FROM path")
+    path_info = result.fetchall()
+    print(path_info)
+    
     
 
-  
+    for section in path_info:
+        print(section[3])
+        g.add_edge(section[1], section[2], section[3])###################################################################################################################################################################################
+    
 
     g.add_edge(3, 0, 4)  # D -> A, weight 4
     g.add_edge(3, 4, 2)  # D -> E, weight 2
@@ -125,7 +131,9 @@ def hi():
     g.add_edge(1, 2, 2)  # B -> C, weight 2
     g.add_edge(1, 5, 2)  # B -> F, weight 2
     g.add_edge(6, 5, 5)  # G -> F, weight 5
+    
+    
         # ... (rest of the graph setup)
-    distance, path = g.dijkstra('Northwood', 'Heathcote Valley')
+    distance, path = g.dijkstra('Northwood', 'Sumner')
     print(f"Path: {path}, Distance: {distance}")
     return (f"Path: {path}, Distance: {distance}")
