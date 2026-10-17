@@ -7,7 +7,12 @@ con = sqlite3.connect("database.db")
 cur = con.cursor()
 
 result = cur.execute("SELECT * FROM INTERSECTION")
-path_id = result.fetchall()
+intersections = result.fetchall()
+
+result = cur.execute("SELECT intersection_name FROM INTERSECTION")
+intersection_names = result.fetchall()
+
+########################################################fix intersection naming to impliment dropdowns
 
 class Graph:
     def __init__(self, size):
@@ -69,7 +74,59 @@ class Graph:
 
         return distances[end_vertex], self.get_path(predecessors, start_vertex_data, end_vertex_data)
 
+def shortest_path(mode):
+    con = sqlite3.connect("database.db")
+    cur = con.cursor()
+    result = cur.execute("SELECT * FROM INTERSECTION")
+    intersection_info = result.fetchall()
+    print(len(intersection_info))
 
+
+    result = cur.execute("SELECT * FROM path")
+    path_info = result.fetchall()
+    
+    g = Graph(len(intersection_info))
+
+    # Create mapping: db_id -> internal index (0..n-1)
+    id_to_index = {}
+    for i, section in enumerate(intersection_info):
+        db_id = section[0]    # primary key in INTERSECTION
+        label = section[1]    # human-readable name e.g. 'Northwood'
+        id_to_index[db_id] = i
+        g.add_vertex_data(i, label)   # use contiguous index
+
+    # Debug: show samples
+    print("num_nodes:", len(intersection_info))
+    print("id_to_index sample:", list(id_to_index.items())[:10])
+    print("path_info sample:", path_info[:5])
+
+    col_map = {'distance': 3, 'time': 4}   # adjust indices if your schema differs
+    if mode not in col_map:
+        raise ValueError(f"Unknown mode {mode!r}; choose one of {list(col_map)}")
+    weight_col = col_map[mode]
+
+    # Add edges using the mapping and guard against missing nodes
+    for section in path_info:
+        from_db = section[1]
+        to_db = section[2]
+        weight = float(section[weight_col])
+
+        if from_db not in id_to_index or to_db not in id_to_index:
+            raise ValueError(f"Edge references missing node: {section}")
+
+        u = id_to_index[from_db]
+        v = id_to_index[to_db]
+
+        g.add_edge(u, v, weight)
+        g.add_edge(v, u, weight) 
+
+
+
+    distance, path = g.dijkstra('Halswell', 'Sumner')
+    print(f"Path: {path}, Distance: {distance}")
+    return (f"Path: {path}, Distance: {distance:.1f}")
+
+    
 
 @app.route("/hi", methods=["GET", "POST"])
 def index():
@@ -99,41 +156,23 @@ def index():
     )
 
 @app.route("/", methods=["GET", "POST"])
-def hi():
-    con = sqlite3.connect("database.db")
-    cur = con.cursor()
-    result = cur.execute("SELECT * FROM INTERSECTION")
-    intersection_info = result.fetchall()
+def home():
+    print(intersection_names[0][0])
+    languages = intersection_names
+    selected_language = None
 
-    g = Graph(size=7)
+    if request.method == "POST":
+        # 2. Extract the user selection using the matching HTML 'name' attribute
+        selected_language = request.form.get("programming_language")
 
-    for section in intersection_info:
-        g.add_vertex_data(section[0], section[1])
+    # 3. Pass both the list and the selection context back to the user
+    return render_template("home.html", languages=languages, selection=selected_language)
 
-    result = cur.execute("SELECT * FROM path")
-    path_info = result.fetchall()
-    print(path_info)
-    
-    
 
-    for section in path_info:
-        print(section[3])
-        g.add_edge(section[1], section[2], section[3])###################################################################################################################################################################################
-    
+@app.route('/time')
+def time():
+    return shortest_path("time")
 
-    g.add_edge(3, 0, 4)  # D -> A, weight 4
-    g.add_edge(3, 4, 2)  # D -> E, weight 2
-    g.add_edge(0, 2, 3)  # A -> C, weight 3
-    g.add_edge(0, 4, 4)  # A -> E, weight 4
-    g.add_edge(4, 2, 4)  # E -> C, weight 4
-    g.add_edge(4, 6, 5)  # E -> G, weight 5
-    g.add_edge(2, 5, 5)  # C -> F, weight 5
-    g.add_edge(1, 2, 2)  # B -> C, weight 2
-    g.add_edge(1, 5, 2)  # B -> F, weight 2
-    g.add_edge(6, 5, 5)  # G -> F, weight 5
-    
-    
-        # ... (rest of the graph setup)
-    distance, path = g.dijkstra('Northwood', 'Sumner')
-    print(f"Path: {path}, Distance: {distance}")
-    return (f"Path: {path}, Distance: {distance}")
+@app.route('/distance')
+def distance():
+    return shortest_path("distance")
