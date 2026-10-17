@@ -1,5 +1,6 @@
 import sqlite3
 from flask import Flask, render_template, request
+from flask import request, redirect, url_for, render_template
 
 app = Flask(__name__)
 
@@ -10,9 +11,12 @@ result = cur.execute("SELECT * FROM INTERSECTION")
 intersections = result.fetchall()
 
 result = cur.execute("SELECT intersection_name FROM INTERSECTION")
-intersection_names = result.fetchall()
+intersection_names_initiall = result.fetchall()
+intersection_names = []
+for x in range(len(intersection_names_initiall)):
+    intersection_names.append(intersection_names_initiall[x][0])
+intersection_names.sort()
 
-########################################################fix intersection naming to impliment dropdowns
 
 class Graph:
     def __init__(self, size):
@@ -74,7 +78,7 @@ class Graph:
 
         return distances[end_vertex], self.get_path(predecessors, start_vertex_data, end_vertex_data)
 
-def shortest_path(mode):
+def shortest_path(mode, start_location, end_location):
     con = sqlite3.connect("database.db")
     cur = con.cursor()
     result = cur.execute("SELECT * FROM INTERSECTION")
@@ -122,9 +126,10 @@ def shortest_path(mode):
 
 
 
-    distance, path = g.dijkstra('Halswell', 'Sumner')
+    distance, path = g.dijkstra(start_location, end_location)
     print(f"Path: {path}, Distance: {distance}")
-    return (f"Path: {path}, Distance: {distance:.1f}")
+
+    return render_template("success.html", path=path, mode=mode.capitalize(),distance=round(distance, 1))
 
     
 
@@ -157,22 +162,25 @@ def index():
 
 @app.route("/", methods=["GET", "POST"])
 def home():
-    print(intersection_names[0][0])
     languages = intersection_names
     selected_language = None
+    start_location = ""
+    end_location = ""
 
     if request.method == "POST":
-        # 2. Extract the user selection using the matching HTML 'name' attribute
-        selected_language = request.form.get("programming_language")
+        start_location = request.form.get("start_location")
+        end_location = request.form.get("end_location")
+        # validate they exist here if you want
+        return redirect(url_for('time', start=start_location, end=end_location))
 
-    # 3. Pass both the list and the selection context back to the user
-    return render_template("home.html", languages=languages, selection=selected_language)
+    return render_template("home.html", languages=languages, selection=selected_language, start_location=start_location, end_location=end_location)
 
 
-@app.route('/time')
-def time():
-    return shortest_path("time")
-
-@app.route('/distance')
-def distance():
-    return shortest_path("distance")
+@app.route('/shortest')
+def shortest():
+    mode = request.args.get('mode')
+    start = request.args.get('start')
+    end = request.args.get('end')
+    if not start or not end or mode not in ('time', 'distance'):
+        return render_template("shortest.html")
+    return shortest_path(mode, start, end), "shortest.html"
