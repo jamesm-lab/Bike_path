@@ -129,7 +129,7 @@ def shortest_path(mode, start_location, end_location):
     distance, path = g.dijkstra(start_location, end_location)
     print(f"Path: {path}, Distance: {distance}")
 
-    return render_template("success.html", path=path, mode=mode.capitalize(),distance=round(distance, 1))
+    return render_template("success.html", path=path, mode=mode.capitalize(), distance=round(distance, 1))
 
     
 
