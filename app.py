@@ -131,35 +131,6 @@ def shortest_path(mode, start_location, end_location):
 
     return render_template("success.html", path=path, mode=mode.capitalize(), distance=round(distance, 1))
 
-    
-
-@app.route("/hi", methods=["GET", "POST"])
-def index():
-    # The default background image that always stays on screen
-    base_image = "hello.jpg"
-
-    # List your transparent overlay files here
-    overlay_options = {
-        "option1": "le_png.png",
-        "option2": "img1.jpg",
-    }
-
-    selected_option = None
-    overlay_image = None
-
-    if request.method == "POST":
-        # Get the option selected by the user
-        selected_option = request.form.get("overlay_choice")
-        # Find the matching transparent image filename
-        overlay_image = overlay_options.get(selected_option)
-
-    return render_template(
-        "index.html",
-        base_image=base_image,
-        overlay_image=overlay_image,
-        selected_option=selected_option,
-    )
-
 @app.route("/", methods=["GET", "POST"])
 def home():
     languages = intersection_names
